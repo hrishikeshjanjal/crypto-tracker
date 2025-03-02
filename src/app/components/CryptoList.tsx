@@ -1,31 +1,67 @@
 "use client";
-import { useContext, useState } from 'react';
-import { CryptoContext } from '../context/CryptoContext';
+import { useContext, useState, useEffect } from "react";
+import { CryptoContext } from "../context/CryptoContext";
+import { TextField, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, CircularProgress } from "@mui/material";
 
 const CryptoList = () => {
-  const { cryptos } = useContext(CryptoContext)!;
-  const [search, setSearch] = useState<string>('');
+  const { cryptos, loading, fetchCryptos } = useContext(CryptoContext)!;
+  const [search, setSearch] = useState<string>("");
+  const [isLoadingDelayed, setIsLoadingDelayed] = useState(true);
 
   const filteredCryptos = cryptos.filter((crypto) =>
     crypto.name.toLowerCase().includes(search.toLowerCase())
   );
 
+  useEffect(() => {
+    if (loading) {
+      const timer = setTimeout(() => {
+        setIsLoadingDelayed(false);
+      }, 1000);
+
+      return () => clearTimeout(timer);
+    }
+    setIsLoadingDelayed(false);
+  }, [loading]);
+
+  if (isLoadingDelayed) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <CircularProgress />
+      </div>
+    );
+  }
+
   return (
     <div>
-      <input
-        type="text"
-        placeholder="Search Cryptocurrency"
+      <TextField
+        label="Search Cryptocurrency"
+        variant="outlined"
+        fullWidth
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        className="border p-2 mb-4 w-full"
+        margin="normal"
       />
-      <ul>
-        {filteredCryptos.map((crypto) => (
-          <li key={crypto.id} className="border p-2 mb-2">
-            {crypto.name}: ${crypto.current_price}
-          </li>
-        ))}
-      </ul>
+      
+      <TableContainer component={Paper}>
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableCell>Cryptocurrency</TableCell>
+              <TableCell>Price</TableCell>
+              <TableCell>Market Cap</TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {filteredCryptos.map((crypto) => (
+              <TableRow key={crypto.id}>
+                <TableCell>{crypto.name}</TableCell>
+                <TableCell>${crypto.current_price.toLocaleString()}</TableCell>
+                <TableCell>${crypto.market_cap.toLocaleString()}</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
     </div>
   );
 };
